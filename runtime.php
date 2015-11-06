@@ -2,7 +2,6 @@
 class runtime { 
     var $StartTime = 0; 
     var $StopTime = 0; 
-	var $DemoTime = 0; 
 	
     function get_microtime() { 
         list($usec, $sec) = explode(' ', microtime()); 
