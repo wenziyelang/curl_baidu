@@ -18,8 +18,9 @@ class BaiduKeyWordRank {
 
     /**
      * 返回类中所有方法的返回值
-     * @access string $keyword
-     * @access string $siteUrl
+     * @access public
+     * @param string $keyword
+     * @param string $siteUrl
      * @return array
      */
     public function KeyWrodReturn($keyword = null, $siteUrl = null) {
@@ -70,8 +71,9 @@ class BaiduKeyWordRank {
 
     /**
      * 查找当前关键词在百度收录数
-     * @access string $keyword
-     * @access string $siteUrl
+     * @access public
+     * @param string $keyword
+     * @param string $siteUrl
      * @return string
      */
     public function IncludedNumber($htmlContens) {
@@ -86,8 +88,9 @@ class BaiduKeyWordRank {
 
     /**
      * intitle:usa site:bailitop.com
-     * @access string $ArticleContents
-     * @access string $siteUrl
+     * @access private
+     * @param string $ArticleContents
+     * @param string $siteUrl
      * @return string
      */
     private function getBaiduArticleNum($ArticleContents = null, $siteUrl = null) {
@@ -105,8 +108,9 @@ class BaiduKeyWordRank {
 
     /**
      * 域名的自然排名
-     * @access string $htmlContents
-     * @access string $siteUrl
+     * @access public
+     * @param string $htmlContents
+     * @param string $siteUrl
      * @return int
      */
     public function NatureSeo($htmlContents, $siteUrl) {
@@ -134,8 +138,9 @@ class BaiduKeyWordRank {
 
     /**
      * 查找当前关键词和域名在百度推广占位和当前页面总推广数
-     * @access string $siteUrl
-     * @access string $htmlContents
+     * @access private
+     * @param string $siteUrl
+     * @param string $htmlContents
      * @return array
      */
     private function getBaiduExtensionData($htmlContents, $siteUrl = null) {
@@ -206,7 +211,8 @@ class BaiduKeyWordRank {
     }
 
     /**
-     * @access string $durl
+     * @access function
+     * @param string $durl
      * @return string
      */
     function getCurl($durl) {
