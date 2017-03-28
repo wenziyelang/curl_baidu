@@ -211,7 +211,6 @@ class BaiduKeyWordRank {
     }
 
     /**
-     * @access function
      * @param string $durl
      * @return string
      */
