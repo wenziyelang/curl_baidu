@@ -1,272 +1,241 @@
 <?php
+
+/**
+ * @link https://github.com/xuepengdong/
+ * @author Xuepeng Dong <wenziyelang@foxmail.com>
+ * @since 1.0
+ */
 class BaiduKeyWordRank {
-	private $htmlContents = null;
-	
-	public $rankNum = 0;
 
-	public $keyWordlineNum = 0;
-	
-	public function __construct() 
-	{
-			set_time_limit(0);
-			error_reporting(0);
-	}
+    private $htmlContents = null;
+    public $rankNum = 0;
+    public $keyWordlineNum = 0;
+
+    public function __construct() {
+        set_time_limit(0);
+        error_reporting(0);
+    }
 
     /**
-     +----------------------------------------------------------
-     * ·µ»ØÀàÖĞËùÓĞ·½·¨µÄ·µ»ØÖµ£¬
-     +----------------------------------------------------------
+     * è¿”å›ç±»ä¸­æ‰€æœ‰æ–¹æ³•çš„è¿”å›å€¼
      * @access string $keyword
-	 * @access string $siteUrl
-     +----------------------------------------------------------
-     * @return array
-     +----------------------------------------------------------
-     */	
-	public function KeyWrodReturn($keyword = null, $siteUrl = null) {
-			$baiduUrl = "http://www.baidu.com/s?wd=".urlencode($keyword)."&pn=0&tn=baiduhome_pg&rn=100&ie=utf-8&usm=2";
-
-			$this->htmlContents = $this->getCurl($baiduUrl);
-			
-			$empBao = strstr($this->htmlContents, '±§Ç¸£¬Ã»ÓĞÕÒµ½Óë');
-			
-            if($empBao){
-				$returnarray['shoulu'] = 'ÎŞ';
-				
-				$returnarray['TuiAll'] = 'ÎŞ';
-				
-				$returnarray['TuiRank'] = 'ÎŞ';
-				
-				$returnarray['zipai'] = 'ÎŞ½á¹û';
-				
-				$returnarray['wenzhangNum'] = 'ÎŞ½á¹û';
-				
-				return $returnarray;
-            }
-			
-			$returnShoulu = $this->IncludedNumber($this->htmlContents);//²éÕÒµ±Ç°¹Ø¼ü´ÊÔÚ°Ù¶ÈÊÕÂ¼Êı
-			
-			
-			$semArray=$this->getBaiduExtensionData($this->htmlContents, $siteUrl[0]);//²éÕÒµ±Ç°¹Ø¼ü´ÊºÍÓòÃûÔÚ°Ù¶ÈÍÆ¹ãÕ¼Î»ºÍµ±Ç°Ò³Ãæ×ÜÍÆ¹ãÊı
-			
-			foreach((array)$siteUrl as $k =>$v){
-				$returnPaiming[$k]["ziran"] = $this->NatureSeo($this->htmlContents, $v);//ÓòÃûµÄ×ÔÈ»ÅÅÃû
-			}
-			
-			foreach((array)$siteUrl as $k =>$v){
-				$ArticleContents = $this->getCurl('http://www.baidu.com/s?wd=intitle%3A' . urlencode($keyword) . '%20site%3A' . $v . '&pn=0&tn=baiduhome_pg&ie=utf-8');
-				
-				$wenzhangNum[$k]["wenzhangNum"]= $this->getBaiduArticleNum($ArticleContents,$v);//intitle:ÁôÑ§ site:bailitop.com
-				
-			}
-
-			$returnarray['shoulu'] = $returnShoulu;
-			
-			$returnarray['TuiAll'] = $semArray['allRank'];
-			
-			$returnarray['TuiRank'] = $semArray['rankNum'];
-
-			$returnarray['zipai'] = $returnPaiming;
-			
-			$returnarray['wenzhangNum'] = $wenzhangNum;
-
-			return $returnarray;
-	}
-	
-	
-    /**
-     +----------------------------------------------------------
-     * ²éÕÒµ±Ç°¹Ø¼ü´ÊÔÚ°Ù¶ÈÊÕÂ¼Êı
-     +----------------------------------------------------------
-     * @access string $keyword
-	 * @access string $siteUrl
-     +----------------------------------------------------------
-     * @return string
-     +----------------------------------------------------------
-     */	
-	public function IncludedNumber($htmlContens) {
-			$rankrules = '/<div[^>]*?class="nums"[^>]*>[\s\S]*?<\/div>/i';
-			
-			preg_match_all($rankrules,$htmlContens, $contentRows);
-
-			$keyWordRow = strip_tags($contentRows[0][0]);
-
-			return preg_replace('/\D/u', '', $keyWordRow);
-			
-	}
-
-
-	
-    /**
-     +----------------------------------------------------------
-     * intitle:ÁôÑ§ site:bailitop.com
-     +----------------------------------------------------------
-     * @access string $ArticleContents
-	 * @access string $siteUrl
-     +----------------------------------------------------------
-     * @return string
-     +----------------------------------------------------------
-     */		
-	private function getBaiduArticleNum($ArticleContents = null, $siteUrl = null) {
-		//preg_match_all('/<span[^>]*?class="nums"[^>]*>[\s\S]*?<\/span>/i', $ArticleContents, $ArticleRow);
-		preg_match_all('/<div[^>]*?class="nums"[^>]*>[\s\S]*?<\/div>/i', $ArticleContents, $ArticleRow);
-		
-		$ArticleRow = strip_tags($ArticleRow[0][0]);
-		
-		if(empty($ArticleRow)){
-			$ArticleRow =0;
-		}
-		
-		return preg_replace('/\D/u', '', $ArticleRow);
-	}
-	
-    /**
-     +----------------------------------------------------------
-     * ÓòÃûµÄ×ÔÈ»ÅÅÃû
-     +----------------------------------------------------------
-     * @access string $htmlContents
-	 * @access string $siteUrl
-     +----------------------------------------------------------
-     * @return int
-     +----------------------------------------------------------
-     */
-	public function NatureSeo($htmlContents,$siteUrl) {
-		$rules = '/(<div[^>]*?class="result-op c-container"[^>]*>[\s\S]*?<\/div>|<span[^>]*?class="g"[^>]*>[\s\S]*?<\/span>|<table[^>]*?class="result"[^>]*>[\s\S]*?<\/table>|<table[^>]*?class="result-op"[^>]*>[\s\S]*?<\/table>|<div[^>]*?class="result-op c-container xpath-log"[^>]*>[\s\S]*?<\/div>|<div[^>]*?class="g"[^>]*>[\s\S]*?<\/div>)/i';
-		
-		preg_match_all($rules, $htmlContents, $contentRow);
-		$rowNum = 0;
-		
-		foreach($contentRow['0'] as $key=>$val) {
-			$htmlContents = strip_tags($val);
-
-			$rowNum = $rowNum + 1;
-
-			if(strstr($htmlContents, $siteUrl)) {
-				break;
-			}
-
-			if($key == count($contentRow['0']) - 1) {
-				$rowNum = '0';
-			}
-		}
-
-		return $rowNum;
-	}
-
-    /**
-     +----------------------------------------------------------
-     * ²éÕÒµ±Ç°¹Ø¼ü´ÊºÍÓòÃûÔÚ°Ù¶ÈÍÆ¹ãÕ¼Î»ºÍµ±Ç°Ò³Ãæ×ÜÍÆ¹ãÊı
-     +----------------------------------------------------------
      * @access string $siteUrl
-	 * @access string $htmlContents
-     +----------------------------------------------------------
      * @return array
-     +----------------------------------------------------------
-     */	
-	
-	private function getBaiduExtensionData($htmlContents,$siteUrl = null) {	
-		//preg_match_all('/(<table[^>]*?class="EC_mr15 EC_ppim_top ec_pp_f"[^>]*>[\s\S]*?<\/table>|<div[^>]*?class="ec_pp_f ec_pp_top"[^>]*>[\s\S]*?<\/div>|<div[^>]*?class="ec_pp_f ec_pp_top ec_first"[^>]*>[\s\S]*?<\/div>)/i', $this->htmlContents, $contentRow);
-		preg_match_all('/(<div[^>]*?class="ec_meta ec_font_small"[^>]*>[\s\S]*?<\/div>|<div[^>]*?class="pl_l_official"[^>]*>[\s\S]*?<\/div>|<td[^>]*?class="f16 EC_PP EC_header EC_tip_handle"[^>]*>[\s\S]*?<\/td>|<td[^>]*?class="EC_PP EC_nowraped EC_url_bottom"[^>]*>[\s\S]*?<\/td>)/i', $htmlContents, $contentRow);
+     */
+    public function KeyWrodReturn($keyword = null, $siteUrl = null) {
+        $baiduUrl = "http://www.baidu.com/s?wd=" . urlencode($keyword) . "&pn=0&tn=baiduhome_pg&rn=100&ie=utf-8&usm=2";
 
-		if(empty($contentRow) || empty($contentRow['0'])) {
-			$this->rankNum = 0;
+        $this->htmlContents = $this->getCurl($baiduUrl);
 
-			return false;
-		}
+        $empBao = strstr($this->htmlContents, 'æŠ±æ­‰ï¼Œæ²¡æœ‰æ‰¾åˆ°ä¸');
 
-		$arrayUnique = array_unique($contentRow['0']);
+        if ($empBao) {
+            $returnarray['shoulu'] = 'æ— ';
 
-		$siteUrlExistsArray = array();
-		
-		foreach($arrayUnique as $key=>$val) {
-			preg_match_all('/(<span[^>]*?[^>]*>[\s\S]*?<\/span>|<span[^>]*?class="ec_url"[^>]*>[\s\S]*?<\/span>)/i', $val, $siteUrlRow);
+            $returnarray['TuiAll'] = 'æ— ';
 
-			if(empty($siteUrlRow) || empty($siteUrlRow['0']['1'])) {
-				continue;
-			}
-			
-			$siteis =  strstr($siteUrlRow['0']['1'],"2013");
-			
-			if(empty($siteis)){
-				$siteUrlr = $siteUrlRow['0']['1'];
-			}else{
-				$siteUrlr = $siteUrlRow['0']['0'];
-			}
-			
-			if(!in_array($siteUrlr, $siteUrlExistsArray)) {
-				$siteUrlExistsArray[] = $siteUrlr;
+            $returnarray['TuiRank'] = 'æ— ';
 
-				$contentRowArray[$key] = strip_tags($val);
-			}
-		}
+            $returnarray['zipai'] = 'æ— ç»“æœ';
 
-		if(empty($contentRowArray)) {
-			$this->rankNum = 0;
+            $returnarray['wenzhangNum'] = 'æ— ç»“æœ';
 
-			return false;
-		}
+            return $returnarray;
+        }
 
-		foreach($contentRowArray as $key=>$val) {
-			$this->rankNum = $this->rankNum +1;
-			
-			if(strstr($val, $siteUrl)) {
-				
-				break;
-			}
-			
-			if($key == count($contentRowArray) - 1) {
-				$this->rankNum = 0;
-			}
-		}
-		$contentRowArrayNum = count($contentRowArray);
-		
-		if(empty($contentRowArrayNum)){
-			$contentRowArrayNum = 0;
-		
-		}
+        $returnShoulu = $this->IncludedNumber($this->htmlContents); //æŸ¥æ‰¾å½“å‰å…³é”®è¯åœ¨ç™¾åº¦æ”¶å½•æ•°
+        $semArray = $this->getBaiduExtensionData($this->htmlContents, $siteUrl[0]); //æŸ¥æ‰¾å½“å‰å…³é”®è¯å’ŒåŸŸååœ¨ç™¾åº¦æ¨å¹¿å ä½å’Œå½“å‰é¡µé¢æ€»æ¨å¹¿æ•°
+        foreach ((array) $siteUrl as $k => $v) {
+            $returnPaiming[$k]["ziran"] = $this->NatureSeo($this->htmlContents, $v); //åŸŸåçš„è‡ªç„¶æ’å
+        }
 
-		$BaiduExtension['rankNum'] = $this->rankNum;
-		
-		$BaiduExtension['allRank'] = $contentRowArrayNum;
-		
-		return $BaiduExtension;
-	}
-	
+        foreach ((array) $siteUrl as $k => $v) {
+            $ArticleContents = $this->getCurl('http://www.baidu.com/s?wd=intitle%3A' . urlencode($keyword) . '%20site%3A' . $v . '&pn=0&tn=baiduhome_pg&ie=utf-8');
+
+            $wenzhangNum[$k]["wenzhangNum"] = $this->getBaiduArticleNum($ArticleContents, $v); //intitle:usa site:bailitop.com
+        }
+
+        $returnarray['shoulu'] = $returnShoulu;
+
+        $returnarray['TuiAll'] = $semArray['allRank'];
+
+        $returnarray['TuiRank'] = $semArray['rankNum'];
+
+        $returnarray['zipai'] = $returnPaiming;
+
+        $returnarray['wenzhangNum'] = $wenzhangNum;
+
+        return $returnarray;
+    }
+
     /**
-     +----------------------------------------------------------
-     * »ñÈ¡Ô¶³ÌµØÖ·ÄÚÈİ
-     +----------------------------------------------------------
-     * @access string $durl
-     +----------------------------------------------------------
+     * æŸ¥æ‰¾å½“å‰å…³é”®è¯åœ¨ç™¾åº¦æ”¶å½•æ•°
+     * @access string $keyword
+     * @access string $siteUrl
      * @return string
-     +----------------------------------------------------------
-     */	
+     */
+    public function IncludedNumber($htmlContens) {
+        $rankrules = '/<div[^>]*?class="nums"[^>]*>[\s\S]*?<\/div>/i';
 
-	function getCurl($durl)	{
-		 if(function_exists('curl_init')){
-		 
-		  	 $ch = curl_init();
-			 
-			 curl_setopt($ch, CURLOPT_URL, $durl);
-			 
-			 curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-			 
-			 //curl_setopt($ch, CURLOPT_USERAGENT, _USERAGENT_);
-			 
-			 curl_setopt($ch, CURLOPT_REFERER,"http://www.baidu.com/");
-			 
-			 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			 
-		     curl_setopt($ch,CURLOPT_USERAGENT,"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)");
-			 
-		     //curl_setopt($c,CURLOPT_USERAGENT,'Mozilla/5.0 (Linux; U; Android 2.3.7; zh-cn; c8650 Build/GWK74) AppleWebKit/533.1 (KHTML, like Gecko)Version/4.0 MQQBrowser/4.5 Mobile Safari/533.1s');
-			 
-			 $r = curl_exec($ch);
-			 
-			 curl_close($ch);
-			 
-			 return $r;
- 		}
-	}
-	
+        preg_match_all($rankrules, $htmlContens, $contentRows);
+
+        $keyWordRow = strip_tags($contentRows[0][0]);
+
+        return preg_replace('/\D/u', '', $keyWordRow);
+    }
+
+    /**
+     * intitle:usa site:bailitop.com
+     * @access string $ArticleContents
+     * @access string $siteUrl
+     * @return string
+     */
+    private function getBaiduArticleNum($ArticleContents = null, $siteUrl = null) {
+        //preg_match_all('/<span[^>]*?class="nums"[^>]*>[\s\S]*?<\/span>/i', $ArticleContents, $ArticleRow);
+        preg_match_all('/<div[^>]*?class="nums"[^>]*>[\s\S]*?<\/div>/i', $ArticleContents, $ArticleRow);
+
+        $ArticleRow = strip_tags($ArticleRow[0][0]);
+
+        if (empty($ArticleRow)) {
+            $ArticleRow = 0;
+        }
+
+        return preg_replace('/\D/u', '', $ArticleRow);
+    }
+
+    /**
+     * åŸŸåçš„è‡ªç„¶æ’å
+     * @access string $htmlContents
+     * @access string $siteUrl
+     * @return int
+     */
+    public function NatureSeo($htmlContents, $siteUrl) {
+        $rules = '/(<div[^>]*?class="result-op c-container"[^>]*>[\s\S]*?<\/div>|<span[^>]*?class="g"[^>]*>[\s\S]*?<\/span>|<table[^>]*?class="result"[^>]*>[\s\S]*?<\/table>|<table[^>]*?class="result-op"[^>]*>[\s\S]*?<\/table>|<div[^>]*?class="result-op c-container xpath-log"[^>]*>[\s\S]*?<\/div>|<div[^>]*?class="g"[^>]*>[\s\S]*?<\/div>)/i';
+
+        preg_match_all($rules, $htmlContents, $contentRow);
+        $rowNum = 0;
+
+        foreach ($contentRow['0'] as $key => $val) {
+            $htmlContents = strip_tags($val);
+
+            $rowNum = $rowNum + 1;
+
+            if (strstr($htmlContents, $siteUrl)) {
+                break;
+            }
+
+            if ($key == count($contentRow['0']) - 1) {
+                $rowNum = '0';
+            }
+        }
+
+        return $rowNum;
+    }
+
+    /**
+     * æŸ¥æ‰¾å½“å‰å…³é”®è¯å’ŒåŸŸååœ¨ç™¾åº¦æ¨å¹¿å ä½å’Œå½“å‰é¡µé¢æ€»æ¨å¹¿æ•°
+     * @access string $siteUrl
+     * @access string $htmlContents
+     * @return array
+     */
+    private function getBaiduExtensionData($htmlContents, $siteUrl = null) {
+        //preg_match_all('/(<table[^>]*?class="EC_mr15 EC_ppim_top ec_pp_f"[^>]*>[\s\S]*?<\/table>|<div[^>]*?class="ec_pp_f ec_pp_top"[^>]*>[\s\S]*?<\/div>|<div[^>]*?class="ec_pp_f ec_pp_top ec_first"[^>]*>[\s\S]*?<\/div>)/i', $this->htmlContents, $contentRow);
+        preg_match_all('/(<div[^>]*?class="ec_meta ec_font_small"[^>]*>[\s\S]*?<\/div>|<div[^>]*?class="pl_l_official"[^>]*>[\s\S]*?<\/div>|<td[^>]*?class="f16 EC_PP EC_header EC_tip_handle"[^>]*>[\s\S]*?<\/td>|<td[^>]*?class="EC_PP EC_nowraped EC_url_bottom"[^>]*>[\s\S]*?<\/td>)/i', $htmlContents, $contentRow);
+
+        if (empty($contentRow) || empty($contentRow['0'])) {
+            $this->rankNum = 0;
+
+            return false;
+        }
+
+        $arrayUnique = array_unique($contentRow['0']);
+
+        $siteUrlExistsArray = array();
+
+        foreach ($arrayUnique as $key => $val) {
+            preg_match_all('/(<span[^>]*?[^>]*>[\s\S]*?<\/span>|<span[^>]*?class="ec_url"[^>]*>[\s\S]*?<\/span>)/i', $val, $siteUrlRow);
+
+            if (empty($siteUrlRow) || empty($siteUrlRow['0']['1'])) {
+                continue;
+            }
+
+            $siteis = strstr($siteUrlRow['0']['1'], "2013");
+
+            if (empty($siteis)) {
+                $siteUrlr = $siteUrlRow['0']['1'];
+            } else {
+                $siteUrlr = $siteUrlRow['0']['0'];
+            }
+
+            if (!in_array($siteUrlr, $siteUrlExistsArray)) {
+                $siteUrlExistsArray[] = $siteUrlr;
+
+                $contentRowArray[$key] = strip_tags($val);
+            }
+        }
+
+        if (empty($contentRowArray)) {
+            $this->rankNum = 0;
+
+            return false;
+        }
+
+        foreach ($contentRowArray as $key => $val) {
+            $this->rankNum = $this->rankNum + 1;
+
+            if (strstr($val, $siteUrl)) {
+
+                break;
+            }
+
+            if ($key == count($contentRowArray) - 1) {
+                $this->rankNum = 0;
+            }
+        }
+        $contentRowArrayNum = count($contentRowArray);
+
+        if (empty($contentRowArrayNum)) {
+            $contentRowArrayNum = 0;
+        }
+
+        $BaiduExtension['rankNum'] = $this->rankNum;
+
+        $BaiduExtension['allRank'] = $contentRowArrayNum;
+
+        return $BaiduExtension;
+    }
+
+    /**
+     * @access string $durl
+     * @return string
+     */
+    function getCurl($durl) {
+        if (function_exists('curl_init')) {
+
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, $durl);
+
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+
+            //curl_setopt($ch, CURLOPT_USERAGENT, _USERAGENT_);
+
+            curl_setopt($ch, CURLOPT_REFERER, "http://www.baidu.com/");
+
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+            curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)");
+
+            //curl_setopt($c,CURLOPT_USERAGENT,'Mozilla/5.0 (Linux; U; Android 2.3.7; zh-cn; c8650 Build/GWK74) AppleWebKit/533.1 (KHTML, like Gecko)Version/4.0 MQQBrowser/4.5 Mobile Safari/533.1s');
+
+            $r = curl_exec($ch);
+
+            curl_close($ch);
+
+            return $r;
+        }
+    }
+
 }
+
 ?>
